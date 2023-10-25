@@ -98,8 +98,17 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
                 initialRollInDegrees = currentRollInDegrees
             }
 
-            val adjustedRoll = currentRollInDegrees - (initialRollInDegrees ?: 0f)
-            modelNode.rotation = Rotation(0f, 0f, adjustedRoll)
+            // Calculate difference in roll
+            var deltaRoll = currentRollInDegrees - (initialRollInDegrees ?: 0f)
+
+            // If the difference is larger than 180 degrees in either direction, adjust by 360 degrees to avoid jumps
+            if (deltaRoll > 180) {
+                deltaRoll -= 360
+            } else if (deltaRoll < -180) {
+                deltaRoll += 360
+            }
+
+            modelNode.rotation = Rotation(0f, 0f, deltaRoll)
         }
     }
 
