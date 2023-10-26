@@ -6,11 +6,11 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Bundle
+import android.view.MotionEvent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isGone
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import com.google.ar.core.Config
-import com.google.ar.sceneform.math.Quaternion
 import io.github.sceneview.ar.ArSceneView
 import io.github.sceneview.ar.node.ArModelNode
 import io.github.sceneview.ar.node.PlacementMode
@@ -27,6 +27,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     private var initialRotationMatrix = FloatArray(9)
     private val rotationSensitivity = .5f
     private var initialRollInDegrees: Float? = null
+    private var isModelPlaced: Boolean = false
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,7 +44,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
             placeModel()
         }
 
-        modelNode = ArModelNode(sceneView.engine,PlacementMode.INSTANT).apply {
+        modelNode = ArModelNode(sceneView.engine, PlacementMode.INSTANT).apply {
             loadModelGlbAsync(
                 glbFileLocation = "models/hat.glb",
                 scaleToUnits = .5f,
@@ -53,10 +54,14 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
                 sceneView.planeRenderer.isVisible = true
                 it.materialInstances[0]
             }
-            onAnchorChanged = {
-                placeButton.isGone = it != null
-            }
             rotation = Rotation(0f, 0f, 0f)
+        }
+
+        sceneView.setOnTouchListener { _, event ->
+            if(event.action == MotionEvent.ACTION_UP) {
+                placeButton.isGone = false
+            }
+            false
         }
 
         sceneView.addChild(modelNode)
@@ -67,6 +72,8 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         modelNode.anchor()
         modelNode.rotation = Rotation(0f, 0f, 0f)
         sceneView.planeRenderer.isVisible = false
+        isModelPlaced = true
+        placeButton.isGone = true
 
         lastKnownOrientation?.let {
             SensorManager.getRotationMatrixFromVector(initialRotationMatrix, it)
