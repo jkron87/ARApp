@@ -24,7 +24,8 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     lateinit var modelNode: ArModelNode
     lateinit var sensorManager: SensorManager
     private var lastKnownOrientation: FloatArray? = null
-    private val rotationSensitivity = 2f
+    private var initialRotationMatrix = FloatArray(9)
+    private val rotationSensitivity = .5f
     private var initialRollInDegrees: Float? = null
 
 
@@ -45,7 +46,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         modelNode = ArModelNode(sceneView.engine,PlacementMode.INSTANT).apply {
             loadModelGlbAsync(
                 glbFileLocation = "models/hat.glb",
-                scaleToUnits = 1f,
+                scaleToUnits = .5f,
                 centerOrigin = Position(0f)
             )
             {
@@ -62,11 +63,15 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
     }
 
-   private fun placeModel(){
-       modelNode.anchor()
-       sceneView.planeRenderer.isVisible = false
+    private fun placeModel() {
+        modelNode.anchor()
+        modelNode.rotation = Rotation(0f, 0f, 0f)
+        sceneView.planeRenderer.isVisible = false
 
-   }
+        lastKnownOrientation?.let {
+            SensorManager.getRotationMatrixFromVector(initialRotationMatrix, it)
+        }
+    }
 
     override fun onPause() {
         super.onPause()
@@ -76,7 +81,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     override fun onResume() {
         super.onResume()
         val rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
-        sensorManager.registerListener(this, rotationSensor, SensorManager.SENSOR_DELAY_NORMAL)
+        sensorManager.registerListener(this, rotationSensor, SensorManager.SENSOR_DELAY_FASTEST)
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
@@ -91,37 +96,31 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
     private fun updateModelRotationBasedOnOrientation() {
         lastKnownOrientation?.let { orientation ->
-            val quaternion = Quaternion(orientation[0], orientation[1], orientation[2], 1f)
-            val currentRollInDegrees = radiansToDegrees(quaternion.toRoll()) * rotationSensitivity
+            val rotationMatrix = FloatArray(9)
+            SensorManager.getRotationMatrixFromVector(rotationMatrix, orientation)
+
+            val orientationValues = FloatArray(3)
+            SensorManager.getOrientation(rotationMatrix, orientationValues)
+            val rollInDegrees = radiansToDegrees(orientationValues[2]) * rotationSensitivity
 
             if (initialRollInDegrees == null) {
-                initialRollInDegrees = currentRollInDegrees
+                initialRollInDegrees = rollInDegrees
             }
 
-            // Calculate difference in roll
-            var deltaRoll = currentRollInDegrees - (initialRollInDegrees ?: 0f)
+            var adjustedRoll = rollInDegrees - (initialRollInDegrees ?: 0f)
 
-            // If the difference is larger than 180 degrees in either direction, adjust by 360 degrees to avoid jumps
-            if (deltaRoll > 180) {
-                deltaRoll -= 360
-            } else if (deltaRoll < -180) {
-                deltaRoll += 360
+            // Handle rotation jumps when crossing the 180° boundary
+            if (adjustedRoll > 180) {
+                adjustedRoll -= 360
+            } else if (adjustedRoll < -180) {
+                adjustedRoll += 360
             }
 
-            modelNode.rotation = Rotation(0f, 0f, deltaRoll)
+            modelNode.rotation = Rotation(0f, 0f, adjustedRoll)
         }
     }
 
     private fun radiansToDegrees(radians: Float): Float {
         return radians * (180.0f / kotlin.math.PI.toFloat())
     }
-}
-
-
-fun Quaternion.toRoll(): Float {
-    // Convert quaternion to roll angle in radians
-    val sinr = 2 * (w * x + y * z)
-    val cosr = 1 - 2 * (x * x + y * y)
-    val roll = kotlin.math.atan2(sinr, cosr)
-    return if (roll < 0) roll + 2 * kotlin.math.PI.toFloat() else roll
 }
