@@ -12,6 +12,7 @@ An AR Android application allowing users to place and interact with a 3D hat mod
 - [Additional Utility](#additional-utility)
 - [Limitations](#limitations)
 - [Future Work](#future-work)
+- [Running the Application](#running-the-application)
 
 ### Architecture
 
@@ -39,15 +40,13 @@ An AR Android application allowing users to place and interact with a 3D hat mod
 
 ### Rotation Sensitivity
 
-- The chosen sensitivity of `2f` amplifies the rotation effect, ensuring users distinctly notice the hat's movement. This can be adjusted to make the movement less or more sensitive.
+- The sensitivity of `.5f` can be adjusted to make the movement less or more sensitive.
+
+- Initially, I implemented rotations using quaternions. However, I observed inconsistencies in achieving the desired roll motion. As a result, I decided to use a rotation matrix, which provided a more robust and precise rotational behavior.
 
 ### Plane Renderer
 
 - Visibility of the AR plane during the hat placement helps user interaction. Once the hat is placed, it's hidden to prevent distractions and for a realistic visualization. This would be removed in future iterations that use facial recognition.
-
-### Additional Utility
-
-- **Quaternion Extension**: The custom function `toRoll()` extracts the roll angle which allows for the hat's accurate orientation adjustment back and forth.
 
 ## Limitations
 
@@ -59,3 +58,25 @@ A notable limitation is the yaw motion. Ideally, when you move around the hat, i
 
 1. **Face Detection**: future iterations would aim to detect the user's face, placing the hat more accurately instead of the current plane detection approach.
 2. **Stable Yaw Handling**: refining yaw detection and ensuring the hat stays put when the user orbits around it.
+
+## Running the Application
+
+### Prerequisites
+
+- **Java Development Kit (JDK):** JDK 8 is recommended. [Download here](https://www.oracle.com/java/technologies/javase-jdk8-downloads.html).
+
+- **Android Studio:** You'll need Android Studio to run and modify the app. [Download here](https://developer.android.com/studio).
+
+- **Android SDK:** Make sure to install Android SDK Platform 33 or higher.
+
+- **Android Device:** The app supports Android devices running Android 10 (API level 29) or higher, as the `minSdk` version specified is 29. The app will not run in an emulator since it doesn't have the movement sensors needed for AR.
+
+### Setup Instructions
+
+1. **Open in Android Studio:** Launch Android Studio and open the cloned project.
+
+2. **Sync Gradle:** Click on the 'Sync Now' option (usually appears at the top) to sync the Gradle build file. This will ensure all dependencies and SDKs specified in `build.gradle` are correctly fetched.
+
+3. **Connect an android device:** enable USB debugging on your device to connect to Android Studio.
+
+4. **Run the App:** click on the green 'Run' button in Android Studio, or use the `Shift + F10` shortcut.
