@@ -114,18 +114,13 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
                 initialRollInDegrees = rollInDegrees
             }
 
-            var adjustedRoll = rollInDegrees - (initialRollInDegrees ?: 0f)
+            val adjustedRoll = rollInDegrees - (initialRollInDegrees ?: 0f)
 
-            // Handle rotation jumps when crossing the 180° boundary
-            if (adjustedRoll > 180) {
-                adjustedRoll -= 360
-            } else if (adjustedRoll < -180) {
-                adjustedRoll += 360
-            }
-
-            modelNode.rotation = Rotation(0f, 0f, adjustedRoll)
+            // Invert the rotation direction to match the phone tilt
+            modelNode.rotation = Rotation(0f, 0f, -adjustedRoll)
         }
     }
+
 
     private fun radiansToDegrees(radians: Float): Float {
         return radians * (180.0f / kotlin.math.PI.toFloat())
